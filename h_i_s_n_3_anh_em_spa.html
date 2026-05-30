@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hải Sản Tươi & Khô 3 Anh Em - Menu Tương Tác</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Ocean & Coral (slate-50 background, slate-800 text, cyan-700 primary, orange-500 accents) -->
+    <!-- Application Structure Plan: The SPA is structured as an interactive digital menu. It provides a cohesive product browsing experience with categorized tabs matching the printed menu. It features a real-time product search, dynamic Cart system with subtotal calculations, and a pre-formatted checkout generator to copy or send orders directly to Zalo. This layout organizes 40+ menu items beautifully without clutter, using vertical cards and dynamic state management for enhanced usability. -->
+    <!-- Visualization & Content Choices: 1. Main Menu -> Grid Cards with Quantity Selectors -> Allows instant adding to cart and ordering -> HTML/JS/Tailwind. 2. Price Distribution -> Bar Chart -> Visually aggregates average prices across categories to show affordability -> Chart.js (Canvas, NO SVG). 3. Floating Cart -> Persistent Sidebar -> Keeps track of selected seafood and computes total prices dynamically -> HTML/JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 220px;
+            }
+        }
+        .category-tab.active {
+            background-color: #0e7490;
+            color: white;
+            border-color: #0e7490;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <!-- Thanh điều hướng -->
+    <nav class="fixed w-full bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <span class="text-2xl">🦞</span>
+                    <div>
+                        <span class="font-black text-lg sm:text-xl text-cyan-800 tracking-tight block leading-none">3 ANH EM</span>
+                        <span class="text-[9px] uppercase tracking-wider font-semibold text-orange-500">Hải Sản Tươi & Khô</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#thuc-don" class="text-slate-600 hover:text-cyan-700 font-medium transition-colors">Menu Điện Tử</a>
+                    <a href="#bieu-do" class="text-slate-600 hover:text-cyan-700 font-medium transition-colors">Phân Tích Giá</a>
+                    <a href="#uu-diem" class="text-slate-600 hover:text-cyan-700 font-medium transition-colors">Cam Kết</a>
+                    <a href="#lien-he" class="text-slate-600 hover:text-cyan-700 font-medium transition-colors">Địa Chỉ</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleCartDrawer()" class="relative bg-cyan-50 hover:bg-cyan-100 text-cyan-800 p-2.5 rounded-full transition-colors">
+                        <span class="text-xl">🛒</span>
+                        <span id="cart-badge" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold hidden">0</span>
+                    </button>
+                    <a href="tel:0906691441" class="bg-cyan-700 hover:bg-cyan-800 text-white px-4 py-2 rounded-full font-bold text-sm transition-colors hidden sm:inline-block">
+                        📞 0906 69 1441
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-16">
+        <!-- Banner chính -->
+        <section class="relative bg-gradient-to-r from-cyan-900 to-cyan-800 text-white py-16 md:py-24 overflow-hidden">
+            <div class="absolute inset-0 opacity-10 text-[25rem] leading-none select-none text-center flex items-center justify-center pointer-events-none">
+                🦐
+            </div>
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                <div class="inline-block bg-orange-500 text-white text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider mb-4 shadow-sm">
+                    Tươi Ngon Mỗi Ngày - Chất Lượng Hàng Đầu
+                </div>
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
+                    HẢI SẢN TƯƠI & KHÔ<br><span class="text-orange-400">3 ANH EM</span>
+                </h1>
+                <p class="text-lg md:text-xl text-cyan-100 max-w-2xl mx-auto mb-8">
+                    Chuyên cung cấp sỉ và lẻ đặc sản Bình Định - Phú Yên, hải sản tươi sống chất lượng cao và các loại khô cá, mực tuyển chọn tận gốc.
+                </p>
+                <div class="flex justify-center gap-4 flex-wrap">
+                    <a href="#thuc-don" class="bg-white text-cyan-900 px-6 py-3 rounded-full text-base font-bold hover:bg-slate-100 transition-all shadow-md">
+                        📖 Xem Menu Báo Giá
+                    </a>
+                    <a href="https://zalo.me/0906691441" target="_blank" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full text-base font-bold transition-all shadow-md">
+                        💬 Chat Đặt Hàng Zalo
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Thư viện Menu Tương tác -->
+        <section id="thuc-don" class="py-12 bg-white">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <!-- Mô tả Section -->
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">📖 Thực Đơn Tương Tác Thông Minh</h2>
+                    <p class="mt-2 text-slate-600 max-w-3xl mx-auto text-base">
+                        Hệ thống menu điện tử hỗ trợ lọc nhanh, tìm kiếm món ăn và tự động tính tổng tiền. Quý khách có thể bấm nút <strong class="text-cyan-700">"+"</strong> hoặc <strong class="text-cyan-700">"Thêm"</strong> để bỏ vào giỏ hàng và gửi đơn qua Zalo tiện lợi.
+                    </p>
+                </div>
+
+                <!-- Thanh Tìm Kiếm & Lọc Danh Mục -->
+                <div class="bg-slate-50 p-4 rounded-2xl mb-8 border border-slate-200">
+                    <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                        <!-- Ô tìm kiếm -->
+                        <div class="relative w-full md:w-80">
+                            <input oninput="filterProducts()" id="search-input" type="text" placeholder="Tìm kiếm món ăn (Cá, mực, chả...)" class="w-full bg-white text-slate-800 pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 text-sm">
+                            <span class="absolute left-3 top-3 text-slate-400 text-sm">🔍</span>
+                        </div>
+                        
+                        <!-- Lọc tab di động/desktop -->
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto justify-center md:justify-end">
+                            <button onclick="changeCategory('all')" class="category-tab active text-sm px-4 py-2 rounded-full border border-slate-200 font-medium transition-all" data-category="all">Tất cả</button>
+                            <button onclick="changeCategory('binh-dinh-phu-yen')" class="category-tab text-sm px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:border-cyan-600 hover:text-cyan-800 font-medium transition-all" data-category="binh-dinh-phu-yen">Đặc sản vùng miền</button>
+                            <button onclick="changeCategory('tuoi-song')" class="category-tab text-sm px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:border-cyan-600 hover:text-cyan-800 font-medium transition-all" data-category="tuoi-song">Tươi Sống / Khô Mực</button>
+                            <button onclick="changeCategory('mon-an-kem')" class="category-tab text-sm px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:border-cyan-600 hover:text-cyan-800 font-medium transition-all" data-category="mon-an-kem">Món Ăn Kèm & Khô Tôm</button>
+                            <button onclick="changeCategory('kho-ca')" class="category-tab text-sm px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:border-cyan-600 hover:text-cyan-800 font-medium transition-all" data-category="kho-ca">Các Loại Khô Cá</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh sách sản phẩm dạng Grid -->
+                <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Javascript sẽ tự động điền thông tin sản phẩm vào đây -->
+                </div>
+
+                <div id="no-results" class="hidden text-center py-12">
+                    <span class="text-5xl block mb-2">🔍</span>
+                    <p class="text-slate-500 font-medium">Không tìm thấy sản phẩm phù hợp. Vui lòng thử từ khóa khác!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Biểu đồ phân tích giá bán -->
+        <section id="bieu-do" class="py-16 bg-slate-100 border-y border-slate-200">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">📊 Phân Khúc Giá Các Loại Khô Cá (ĐVT: 0.5kg)</h2>
+                    <p class="mt-4 text-slate-600 max-w-3xl mx-auto text-base">
+                        Biểu đồ phân khúc giá dưới đây thống kê các loại khô cá phổ biến tại cửa hàng. Giúp khách hàng dễ dàng định hình ngân sách và so sánh lựa chọn giữa các dòng cá khô từ bình dân đến cao cấp.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm max-w-3xl mx-auto border border-slate-200">
+                    <div class="chart-container">
+                        <canvas id="menuPricesChart"></canvas>
+                    </div>
+                    <p class="text-center text-xs text-slate-500 mt-4 italic">
+                        * Giá bán lẻ thực tế có thể dao động nhẹ tùy theo mùa vụ đánh bắt.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lợi thế cửa hàng -->
+        <section id="uu-diem" class="py-16 bg-slate-900 text-slate-100">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-white">💎 Cam Kết Vàng Từ 3 Anh Em</h2>
+                    <p class="mt-4 text-slate-400 max-w-2xl mx-auto">
+                        Chúng tôi hiểu rằng chất lượng bữa ăn gia đình là quan trọng nhất. Vì vậy, Hải Sản 3 Anh Em luôn hoạt động với các giá trị cốt lõi:
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-cyan-500 transition-all">
+                        <div class="text-4xl mb-4">⚓</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Tươi Sạch Tự Nhiên</h3>
+                        <p class="text-slate-300">Nhập trực tiếp từ vùng biển Bình Định - Phú Yên, đảm bảo độ tươi tối đa, cam kết không sử dụng hóa chất bảo quản độc hại.</p>
+                    </div>
+                    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-cyan-500 transition-all">
+                        <div class="text-4xl mb-4">🏷️</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Bán Đúng Giá Niêm Yết</h3>
+                        <p class="text-slate-300">Bảng giá minh bạch rõ ràng, không mập mờ chèo kéo. Hỗ trợ giá sỉ cực tốt cho các nhà hàng, quán ăn, đại lý nhỏ lẻ.</p>
+                    </div>
+                    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-cyan-500 transition-all">
+                        <div class="text-4xl mb-4">🤝</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Chính Sách Bao Ăn</h3>
+                        <p class="text-slate-300">Đổi trả hoặc đền bù nhanh chóng nếu hàng giao tới bị hỏng, ốp hoặc kém chất lượng so với cam kết ban đầu.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Thông tin liên hệ -->
+        <section id="lien-he" class="py-16 bg-white relative">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="bg-cyan-50 rounded-3xl p-8 md:p-12 shadow-lg border border-cyan-100">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-cyan-900">📍 Thông Tin Cửa Hàng & Liên Hệ</h2>
+                        <p class="text-slate-600 mt-2">Ghé mua hàng trực tiếp hoặc gọi điện ship hàng siêu nhanh trong khu vực nội thành TPHCM</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl bg-white p-3 rounded-xl shadow-sm border border-slate-100">📞</span>
+                                <div>
+                                    <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Hotline hỗ trợ & Đặt Hàng</p>
+                                    <a href="tel:0906691441" class="text-2xl font-black text-cyan-800 hover:underline">0906 69 1441</a>
+                                    <p class="text-xs text-slate-400 mt-1">(Hỗ trợ Zalo tư vấn báo giá hằng ngày)</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl bg-white p-3 rounded-xl shadow-sm border border-slate-100">🏠</span>
+                                <div>
+                                    <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Địa chỉ chi nhánh</p>
+                                    <p class="font-bold text-slate-800 text-lg leading-snug">15 - 17 Trần Văn Ơn, P. Tân Sơn Nhì, Q. Tân Phú, TPHCM</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl bg-white p-3 rounded-xl shadow-sm border border-slate-100">🕒</span>
+                                <div>
+                                    <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Khung giờ đón khách</p>
+                                    <p class="font-bold text-slate-800 text-lg">Mở cửa suốt tuần: 07:00 – 21:00</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bản đồ/Khung giả định định vị -->
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                            <div class="rounded-xl overflow-hidden bg-slate-100 h-56 flex flex-col justify-center items-center text-center p-6 border border-dashed border-slate-300">
+                                <span class="text-4xl mb-2">🗺️</span>
+                                <h4 class="font-bold text-slate-800 mb-1">Cửa hàng Hải Sản 3 Anh Em</h4>
+                                <p class="text-xs text-slate-500 max-w-xs mb-3">15-17 Trần Văn Ơn, Tân Sơn Nhì, Tân Phú, Thành phố Hồ Chí Minh</p>
+                                <a href="https://maps.google.com/?q=15-17+Trần+Văn+Ơn,+Tân+Sơn+Nhì,+Tân+Phú" target="_blank" class="bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
+                                    Mở Trên Google Maps
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Ngăn Giỏ hàng (Drawer) -->
+    <div id="cart-drawer" class="fixed inset-y-0 right-0 max-w-full flex transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+        <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col">
+            <div class="p-6 border-b border-slate-200 bg-cyan-800 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🛒</span>
+                    <h3 class="font-bold text-lg">Đơn Hàng Của Bạn</h3>
+                </div>
+                <button onclick="toggleCartDrawer()" class="text-white hover:text-orange-300 text-xl font-bold">✕</button>
+            </div>
+            
+            <!-- Danh sách món chọn -->
+            <div id="cart-items-list" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <!-- Javascript tự tạo item giỏ hàng -->
+                <div class="text-center py-12 text-slate-400">
+                    <p class="text-4xl mb-2">🛒</p>
+                    <p>Giỏ hàng đang trống.</p>
+                    <p class="text-xs mt-1">Hãy bấm dấu "+" ở danh mục món để thêm nhé!</p>
+                </div>
+            </div>
+
+            <!-- Tổng kết & Đặt hàng -->
+            <div class="p-6 border-t border-slate-200 bg-slate-50">
+                <div class="flex justify-between items-center mb-4 text-slate-700">
+                    <span class="font-medium">Tổng tạm tính (món có giá):</span>
+                    <span id="cart-total" class="font-black text-xl text-orange-600">0đ</span>
+                </div>
+                <p id="negotiable-warning" class="text-[11px] text-orange-500 mb-4 hidden italic">
+                    ⚠️ Lưu ý: Đơn hàng có chứa sản phẩm "Theo thời giá", giá thực tế sẽ được chúng tôi báo chi tiết khi chốt qua Zalo.
+                </p>
+                <div class="space-y-2">
+                    <button onclick="sendOrderZalo()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                        💬 Đặt Hàng Qua Zalo
+                    </button>
+                    <button onclick="clearCart()" class="w-full text-slate-500 hover:text-red-500 py-2 text-xs font-semibold transition-colors">
+                        Xóa toàn bộ giỏ hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lớp phủ khi mở giỏ hàng -->
+    <div id="cart-overlay" onclick="toggleCartDrawer()" class="fixed inset-0 bg-black/40 z-40 hidden"></div>
+
+    <footer class="bg-slate-900 text-slate-500 py-8 text-center border-t border-slate-800 text-sm">
+        <div class="max-w-6xl mx-auto px-4">
+            <p class="text-slate-400 font-bold mb-1">HẢI SẢN TƯƠI & KHÔ 3 ANH EM</p>
+            <p class="mb-4 text-xs">Món quà từ biển xanh - Đậm tình quê hương</p>
+            <p>&copy; 2026 Hải Sản 3 Anh Em. Tất cả các quyền được bảo hộ.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Cơ sở dữ liệu danh mục menu lấy trực tiếp từ file ảnh
+        const menuProducts = [
+            // 1. ĐẶC SẢN BÌNH ĐỊNH - PHÚ YÊN
+            { id: 1, cat: 'binh-dinh-phu-yen', name: 'Chả cá Bình Định', unit: 'Miếng', price: 90000 },
+            { id: 2, cat: 'binh-dinh-phu-yen', name: 'Chả mực', unit: '0.5kg', price: 190000 },
+            { id: 3, cat: 'binh-dinh-phu-yen', name: 'Chả tôm', unit: 'Hộp', price: 70000 },
+            { id: 4, cat: 'binh-dinh-phu-yen', name: 'Chả bò', unit: 'Cây', price: 110000 },
+            { id: 5, cat: 'binh-dinh-phu-yen', name: 'Chả lụa', unit: 'Cây', price: 90000 },
+            { id: 6, cat: 'binh-dinh-phu-yen', name: 'Nem nướng Phú Yên', unit: 'Cây', price: 45000 },
+            { id: 7, cat: 'binh-dinh-phu-yen', name: 'Chả ram', unit: 'Hộp', price: 90000 },
+            { id: 8, cat: 'binh-dinh-phu-yen', name: 'Mắm nhĩ', unit: 'Chai', price: 35000 },
+            { id: 9, cat: 'binh-dinh-phu-yen', name: 'Mắm mực', unit: 'Chai', price: 65000 },
+            { id: 10, cat: 'binh-dinh-phu-yen', name: 'Mắm ruốc', unit: 'Chai', price: 35000 },
+            { id: 11, cat: 'binh-dinh-phu-yen', name: 'Mắm cá cơm', unit: 'Chai', price: 25000 },
+            { id: 12, cat: 'binh-dinh-phu-yen', name: 'Mắm nêm', unit: 'Chai', price: 30000 },
+            { id: 13, cat: 'binh-dinh-phu-yen', name: 'Dầu phộng nguyên chất', unit: 'Chai', price: 140000 },
+            { id: 14, cat: 'binh-dinh-phu-yen', name: 'Bánh tráng dày Bình Định', unit: 'Xấp 20 cái', price: 40000 },
+
+            // 2. HẢI SẢN TƯƠI SỐNG
+            { id: 15, cat: 'tuoi-song', name: 'Tôm tươi sống', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 16, cat: 'tuoi-song', name: 'Cua tươi sống', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 17, cat: 'tuoi-song', name: 'Mực ống tươi sống', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 18, cat: 'tuoi-song', name: 'Cá biển các loại', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+
+            // 3. MÓN ĂN KÈM
+            { id: 19, cat: 'mon-an-kem', name: 'Chà bông tôm đất', unit: 'Hộp', price: 165000 },
+            { id: 20, cat: 'mon-an-kem', name: 'Bánh phồng tôm (Loại 1)', unit: 'Hộp', price: 119000 },
+            { id: 21, cat: 'mon-an-kem', name: 'Bánh phồng tôm (Loại 2)', unit: 'Hộp', price: 60000 },
+
+            // 4. KHÔ TÔM THẺ
+            { id: 22, cat: 'mon-an-kem', name: 'Khô tôm thẻ (Loại 1)', unit: '200g', price: 250000 },
+            { id: 23, cat: 'mon-an-kem', name: 'Khô tôm thẻ (Loại 2)', unit: '200g', price: 225000 },
+            { id: 24, cat: 'mon-an-kem', name: 'Khô tôm thẻ (Loại 3)', unit: '200g', price: 190000 },
+
+            // 5. KHÔ MỰC & KHÔ TÔM ĐẤT
+            { id: 25, cat: 'tuoi-song', name: 'Khô mực lớn (6-10 con)', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 26, cat: 'tuoi-song', name: 'Khô mực vừa (12-16 con)', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 27, cat: 'tuoi-song', name: 'Khô mực vừa (16-20 con)', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 28, cat: 'tuoi-song', name: 'Khô mực nhỡ (30-35 con)', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 29, cat: 'tuoi-song', name: 'Khô mực nhỏ (40-45 con)', unit: 'Kg', price: 'Theo thời giá', negotiable: true },
+            { id: 30, cat: 'mon-an-kem', name: 'Khô tôm đất nguyên vỏ', unit: '250g', price: 265000 },
+            { id: 31, cat: 'mon-an-kem', name: 'Tôm giòn', unit: '250g', price: 105000 },
+
+            // 8. CÁC LOẠI KHÔ CÁ (Đơn vị tính: 0.5kg)
+            { id: 32, cat: 'kho-ca', name: 'Cá lóc đồng nhỏ xẻ khô', unit: '0.5kg', price: 175000 },
+            { id: 33, cat: 'kho-ca', name: 'Cá lóc cừng khô', unit: '0.5kg', price: 160000 },
+            { id: 34, cat: 'kho-ca', name: 'Cá lóc xẻ tiêu khô', unit: '0.5kg', price: 140000 },
+            { id: 35, cat: 'kho-ca', name: 'Cá dứa nguyên con lớn khô', unit: '0.5kg', price: 225000 },
+            { id: 36, cat: 'kho-ca', name: 'Cá dứa baby khô', unit: '0.5kg', price: 125000 },
+            { id: 37, cat: 'kho-ca', name: 'Cá lù đù nguyên con lớn khô', unit: '0.5kg', price: 140000 },
+            { id: 38, cat: 'kho-ca', name: 'Cá lù đù xẻ 1 nắng', unit: '0.5kg', price: 150000 },
+            { id: 39, cat: 'kho-ca', name: 'Cá lù đù 1 nắng nguyên con nhỏ', unit: '0.5kg', price: 110000 },
+            { id: 40, cat: 'kho-ca', name: 'Cá sặc bổi lạt khô (Hộp 8 con)', unit: '0.5kg', price: 210000 },
+            { id: 41, cat: 'kho-ca', name: 'Cá sặc bổi lạt khô (Hộp 10 con)', unit: '0.5kg', price: 200000 },
+            { id: 42, cat: 'kho-ca', name: 'Cá sặc bổi lạt khô (Hộp 12 con)', unit: '0.5kg', price: 185000 },
+            { id: 43, cat: 'kho-ca', name: 'Cá kèo khô', unit: '0.5kg', price: 325000 },
+            { id: 44, cat: 'kho-ca', name: 'Cá chỉ vàng xẻ bông khô', unit: '0.5kg', price: 150000 },
+            { id: 45, cat: 'kho-ca', name: 'Cá chạch nguyên con khô', unit: '0.5kg', price: 475000 },
+            { id: 46, cat: 'kho-ca', name: 'Khô cá phi', unit: '0.5kg', price: 130000 },
+            { id: 47, cat: 'kho-ca', name: 'Khô cá khoai nguyên con', unit: '0.5kg', price: 240000 },
+            { id: 48, cat: 'kho-ca', name: 'Khô cá khoai xẻ', unit: '0.5kg', price: 290000 },
+            { id: 49, cat: 'kho-ca', name: 'Chả cá thát lát nguyên con', unit: '0.5kg', price: 120000 },
+            { id: 50, cat: 'kho-ca', name: 'Khô cá đuối 1 nắng', unit: '0.5kg', price: 105000 },
+            { id: 51, cat: 'kho-ca', name: 'Khô trâu đặc sản', unit: '0.5kg', price: 525000 }
+        ];
+
+        // Quản lý trạng thái giỏ hàng
+        let cartState = {};
+        let currentFilter = 'all';
+
+        // Khởi tạo hiển thị menu
+        function initProductGrid() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            const filtered = menuProducts.filter(p => {
+                const matchesCat = (currentFilter === 'all' || p.cat === currentFilter);
+                const query = document.getElementById('search-input').value.toLowerCase().trim();
+                const matchesSearch = p.name.toLowerCase().includes(query) || p.unit.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('no-results').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('no-results').classList.add('hidden');
+            }
+
+            filtered.forEach(p => {
+                const isNego = p.negotiable;
+                const priceFormatted = isNego ? "Liên hệ" : p.price.toLocaleString('vi-VN') + "đ";
+                const qty = cartState[p.id] ? cartState[p.id].qty : 0;
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between hover:border-cyan-500 hover:shadow-md transition-all">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-cyan-50 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-md">ĐVT: ${p.unit}</span>
+                                ${isNego ? '<span class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-md">Thời Giá</span>' : ''}
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-base mb-1">${p.name}</h3>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="font-extrabold text-cyan-800">${priceFormatted}</span>
+                            
+                            ${qty > 0 ? `
+                                <div class="flex items-center gap-2 bg-cyan-700 text-white rounded-lg p-1">
+                                    <button onclick="updateQty(${p.id}, -1)" class="w-6 h-6 flex items-center justify-center font-bold text-lg leading-none hover:text-orange-200 transition-colors">–</button>
+                                    <span class="w-5 text-center text-sm font-bold">${qty}</span>
+                                    <button onclick="updateQty(${p.id}, 1)" class="w-6 h-6 flex items-center justify-center font-bold text-lg leading-none hover:text-orange-200 transition-colors">+</button>
+                                </div>
+                            ` : `
+                                <button onclick="addToCart(${p.id})" class="bg-cyan-50 hover:bg-cyan-700 hover:text-white text-cyan-800 text-xs font-bold px-4 py-2 rounded-lg transition-colors border border-cyan-100">
+                                    + Thêm
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // Chuyển Tab danh mục
+        function changeCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.category-tab').forEach(btn => {
+                btn.classList.remove('active', 'bg-cyan-700', 'text-white');
+                btn.classList.add('text-slate-600');
+            });
+            const activeBtn = document.querySelector(`.category-tab[data-category="${cat}"]`);
+            activeBtn.classList.add('active', 'bg-cyan-700', 'text-white');
+            initProductGrid();
+        }
+
+        // Tìm kiếm thời gian thực
+        function filterProducts() {
+            initProductGrid();
+        }
+
+        // Thao tác giỏ hàng
+        function addToCart(id) {
+            const product = menuProducts.find(p => p.id === id);
+            cartState[id] = { product, qty: 1 };
+            updateCartUI();
+            initProductGrid();
+        }
+
+        function updateQty(id, delta) {
+            if (cartState[id]) {
+                cartState[id].qty += delta;
+                if (cartState[id].qty <= 0) {
+                    delete cartState[id];
+                }
+                updateCartUI();
+                initProductGrid();
+            }
+        }
+
+        function clearCart() {
+            cartState = {};
+            updateCartUI();
+            initProductGrid();
+        }
+
+        // Đồng bộ dữ liệu hiển thị giỏ hàng
+        function updateCartUI() {
+            const listContainer = document.getElementById('cart-items-list');
+            const cartBadge = document.getElementById('cart-badge');
+            
+            listContainer.innerHTML = '';
+            
+            const keys = Object.keys(cartState);
+            let total = 0;
+            let totalItemsCount = 0;
+            let hasNegotiable = false;
+
+            if (keys.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 text-slate-400">
+                        <p class="text-4xl mb-2">🛒</p>
+                        <p class="font-medium">Giỏ hàng của bạn đang trống</p>
+                        <p class="text-xs mt-1">Bấm nút (+) ở các sản phẩm để lên đơn.</p>
+                    </div>
+                `;
+                document.getElementById('negotiable-warning').classList.add('hidden');
+                document.getElementById('cart-total').innerText = '0đ';
+                cartBadge.classList.add('hidden');
+                return;
+            }
+
+            keys.forEach(key => {
+                const item = cartState[key];
+                const isNego = item.product.negotiable;
+                let subtotalText = "Thời giá";
+                
+                if (!isNego) {
+                    const sub = item.product.price * item.qty;
+                    total += sub;
+                    subtotalText = sub.toLocaleString('vi-VN') + "đ";
+                } else {
+                    hasNegotiable = true;
+                }
+                totalItemsCount += item.qty;
+
+                const itemRow = `
+                    <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div class="flex-1 pr-2">
+                            <h4 class="font-bold text-sm text-slate-800 leading-tight">${item.product.name}</h4>
+                            <p class="text-[11px] text-slate-500 mt-1">ĐVT: ${item.product.unit} | Giá gốc: ${isNego ? 'Liên hệ' : item.product.price.toLocaleString('vi-VN') + 'đ'}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1">
+                                <button onclick="updateQty(${item.product.id}, -1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-600 hover:text-red-500">–</button>
+                                <span class="w-4 text-center text-xs font-bold">${item.qty}</span>
+                                <button onclick="updateQty(${item.product.id}, 1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-600 hover:text-cyan-600">+</button>
+                            </div>
+                            <span class="w-20 text-right text-xs font-black text-cyan-800">${subtotalText}</span>
+                        </div>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', itemRow);
+            });
+
+            document.getElementById('cart-total').innerText = total.toLocaleString('vi-VN') + "đ";
+            
+            if (hasNegotiable) {
+                document.getElementById('negotiable-warning').classList.remove('hidden');
+            } else {
+                document.getElementById('negotiable-warning').classList.add('hidden');
+            }
+
+            if (totalItemsCount > 0) {
+                cartBadge.innerText = totalItemsCount;
+                cartBadge.classList.remove('hidden');
+            } else {
+                cartBadge.classList.add('hidden');
+            }
+        }
+
+        // Đóng/Mở thanh giỏ hàng bên hông
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            drawer.classList.toggle('translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Tạo chuỗi nội dung tin nhắn gửi Zalo tự động
+        function sendOrderZalo() {
+            const keys = Object.keys(cartState);
+            if (keys.length === 0) {
+                alert("Giỏ hàng đang trống! Vui lòng chọn sản phẩm trước.");
+                return;
+            }
+
+            let message = `Xin chào Hải Sản 3 Anh Em! Tôi muốn đặt mua các món sau:\n\n`;
+            let idx = 1;
+            let total = 0;
+            let hasNego = false;
+
+            keys.forEach(key => {
+                const item = cartState[key];
+                const isNego = item.product.negotiable;
+                let priceText = "";
+                
+                if (!isNego) {
+                    const sub = item.product.price * item.qty;
+                    total += sub;
+                    priceText = `${sub.toLocaleString('vi-VN')}đ`;
+                } else {
+                    hasNego = true;
+                    priceText = "Liên hệ báo giá";
+                }
+
+                message += `${idx}. ${item.product.name} (ĐVT: ${item.product.unit}) - SL: ${item.qty} - [${priceText}]\n`;
+                idx++;
+            });
+
+            message += `\n------------------------\n`;
+            message += `💰 Tổng tạm tính (Món có giá lẻ): ${total.toLocaleString('vi-VN')}đ\n`;
+            if (hasNego) {
+                message += `⚠️ Đơn hàng có món "Thời Giá", vui lòng liên hệ báo thêm.\n`;
+            }
+            message += `📍 Cửa hàng giao đến: [Quý khách vui lòng nhập địa chỉ của mình tại đây]`;
+
+            // Mã hóa nội dung tin nhắn để chuyển tiếp qua URL
+            const encodedText = encodeURIComponent(message);
+            // Link chuyển hướng trực tiếp đến Zalo của cửa hàng
+            const zaloUrl = `https://zalo.me/0906691441`;
+            
+            // Sao chép nội dung tin nhắn trước khi chuyển trang để khách tiện paste vào khung chat
+            navigator.clipboard.writeText(message).then(() => {
+                alert("Đã tự động sao chép danh sách đơn hàng của bạn! Bạn sẽ được chuyển hướng đến Zalo, vui lòng paste (dán) nội dung vào khung chat với cửa hàng nhé.");
+                window.open(zaloUrl, '_blank');
+            }).catch(() => {
+                window.open(zaloUrl, '_blank');
+            });
+        }
+
+        // Biểu đồ minh họa phân khúc các loại Khô cá
+        document.addEventListener('DOMContentLoaded', function() {
+            initProductGrid();
+
+            const chartCtx = document.getElementById('menuPricesChart').getContext('2d');
+            
+            // Lấy mẫu một số loại khô cá phổ biến nhất
+            const dryFishLabels = ['Cá lóc đồng xẻ', 'Cá dứa lớn', 'Lù đù 1 nắng', 'Cá kèo khô', 'Cá chỉ vàng', 'Cá chạch khô', 'Khô trâu'];
+            const dryFishPrices = [175000, 225000, 150000, 325000, 150000, 475000, 525000];
+
+            const barChart = new Chart(chartCtx, {
+                type: 'bar',
+                data: {
+                    labels: dryFishLabels,
+                    datasets: [{
+                        label: 'Giá bán lẻ (đ/0.5kg)',
+                        data: dryFishPrices,
+                        backgroundColor: [
+                            'rgba(14, 116, 144, 0.85)', // Cyan
+                            'rgba(249, 115, 22, 0.85)', // Orange
+                            'rgba(14, 116, 144, 0.85)', 
+                            'rgba(249, 115, 22, 0.85)',
+                            'rgba(14, 116, 144, 0.85)',
+                            'rgba(249, 115, 22, 0.85)',
+                            'rgba(15, 23, 42, 0.85)'     // Slate
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Đơn giá: ' + context.raw.toLocaleString('vi-VN') + 'đ / 0.5kg';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000).toLocaleString('vi-VN') + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
